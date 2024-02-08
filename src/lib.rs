@@ -22,6 +22,14 @@ pub struct Args {
     chars: bool,
 }
 
+#[derive(Debug, PartialEq)]
+pub struct FileInfo {
+    num_lines: usize,
+    num_words: usize,
+    num_bytes: usize,
+    num_chars: usize,
+}
+
 pub fn get_args() -> MyResult<Args> {
     let mut args = Args::parse();
     let lines = args.lines;
