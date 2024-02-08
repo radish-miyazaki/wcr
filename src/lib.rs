@@ -33,6 +33,17 @@ pub struct FileInfo {
     num_chars: usize,
 }
 
+impl FileInfo {
+    fn new(num_lines: usize, num_words: usize, num_bytes: usize, num_chars: usize) -> Self {
+        FileInfo {
+            num_lines,
+            num_words,
+            num_bytes,
+            num_chars,
+        }
+    }
+}
+
 pub fn get_args() -> MyResult<Args> {
     let mut args = Args::parse();
     let lines = args.lines;
@@ -77,35 +88,26 @@ pub fn count(mut file: impl BufRead) -> MyResult<FileInfo> {
         buf.clear();
     }
 
-    Ok(FileInfo {
-        num_lines,
-        num_words,
-        num_bytes,
-        num_chars,
-    })
+    Ok(FileInfo::new(num_lines, num_words, num_bytes, num_chars))
+}
+
+fn format_field(show: bool, value: usize) -> String {
+    if show {
+        format!("{:>8}", value)
+    } else {
+        String::new()
+    }
 }
 
 fn stdout_file_info(args: &Args, file_info: &FileInfo, filename: &str) {
-    let mut output = String::new();
-
-    if args.lines {
-        output.push_str(&format!("{:8}", file_info.num_lines));
-    }
-
-    if args.words {
-        output.push_str(&format!("{:8}", file_info.num_words));
-    }
-
-    if args.bytes {
-        output.push_str(&format!("{:8}", file_info.num_bytes));
-    } else if args.chars {
-        output.push_str(&format!("{:8}", file_info.num_chars));
-    }
-
-    if filename != "-" {
-        output.push_str(&format!(" {}", filename));
-    }
-    println!("{}", output);
+    println!(
+        "{}{}{}{}{}",
+        format_field(args.lines, file_info.num_lines),
+        format_field(args.words, file_info.num_words),
+        format_field(args.bytes, file_info.num_bytes),
+        format_field(args.chars, file_info.num_chars),
+        if filename == "-" { "".to_string() } else { format!(" {}", filename) }
+    );
 }
 
 pub fn run(args: Args) -> MyResult<()> {
@@ -130,14 +132,8 @@ pub fn run(args: Args) -> MyResult<()> {
     }
 
     if args.files.len() > 1 {
-        let total = FileInfo {
-            num_lines: total_num_lines,
-            num_words: total_num_words,
-            num_bytes: total_num_bytes,
-            num_chars: total_num_chars,
-        };
-
-        stdout_file_info(&args, &total, "total");
+        let total_info = FileInfo::new(total_num_lines, total_num_words, total_num_bytes, total_num_chars);
+        stdout_file_info(&args, &total_info, "total");
     }
 
     Ok(())
@@ -147,7 +143,7 @@ pub fn run(args: Args) -> MyResult<()> {
 mod tests {
     use std::io::Cursor;
 
-    use super::{count, FileInfo};
+    use super::{count, FileInfo, format_field};
 
     #[test]
     fn test_count() {
@@ -162,5 +158,12 @@ mod tests {
             num_bytes: 48,
         };
         assert_eq!(info.unwrap(), expected);
+    }
+
+    #[test]
+    fn test_format_field() {
+        assert_eq!(format_field(false, 1), "");
+        assert_eq!(format_field(true, 3), "       3");
+        assert_eq!(format_field(true, 10), "      10");
     }
 }
