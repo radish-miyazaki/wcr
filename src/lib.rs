@@ -1,4 +1,7 @@
 use std::error::Error;
+use std::fs::File;
+use std::io;
+use std::io::{BufRead, BufReader};
 
 use clap::Parser;
 
@@ -53,6 +56,7 @@ fn open(filename: &str) -> MyResult<Box<dyn BufRead>> {
     }
 }
 
+pub fn count(mut file: impl BufRead) -> MyResult<FileInfo> {
     let mut num_lines = 0;
     let mut num_words = 0;
     let mut num_bytes = 0;
@@ -75,4 +79,26 @@ pub fn run(args: Args) -> MyResult<()> {
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use std::io::Cursor;
+
+    use super::{count, FileInfo};
+
+    #[test]
+    fn test_count() {
+        let text = "I don't want the world. I just want your half.\r\n";
+        let info = count(Cursor::new(text));
+
+        assert!(info.is_ok());
+        let expected = FileInfo {
+            num_lines: 1,
+            num_words: 10,
+            num_chars: 48,
+            num_bytes: 48,
+        };
+        assert_eq!(info.unwrap(), expected);
+    }
 }
