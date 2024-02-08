@@ -46,7 +46,33 @@ pub fn get_args() -> MyResult<Args> {
     Ok(args)
 }
 
+fn open(filename: &str) -> MyResult<Box<dyn BufRead>> {
+    match filename {
+        "-" => Ok(Box::new(BufReader::new(io::stdin()))),
+        _ => Ok(Box::new(BufReader::new(File::open(filename)?)))
+    }
+}
+
+    let mut num_lines = 0;
+    let mut num_words = 0;
+    let mut num_bytes = 0;
+    let mut num_chars = 0;
+
+    Ok(FileInfo {
+        num_lines,
+        num_words,
+        num_bytes,
+        num_chars,
+    })
+}
+
 pub fn run(args: Args) -> MyResult<()> {
-    println!("{:#?}", args);
+    for filename in &args.files {
+        match open(filename) {
+            Err(e) => eprintln!("{}: {}", filename, e),
+            Ok(_) => {}
+        }
+    }
+
     Ok(())
 }
